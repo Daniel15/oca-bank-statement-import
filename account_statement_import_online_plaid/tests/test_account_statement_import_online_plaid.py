@@ -4,6 +4,8 @@ import datetime
 from copy import deepcopy
 from unittest.mock import MagicMock, patch
 
+from dateutil.relativedelta import relativedelta
+
 from odoo.tests import common
 
 TRANSACTIONS = [
@@ -196,6 +198,34 @@ class TestAccountStatementImportOnlinePlaid(common.TransactionCase):
         vals = self.provider._prepare_vals_for_statement(transactions)
         self.assertEqual(len(vals), 1)
         self.assertEqual(vals[0]["unique_import_id"], transactions[1]["transaction_id"])
+
+    def test_scheduled_date_since_has_fourteen_day_lookback(self):
+        date_until = datetime.datetime(2024, 8, 10, 12)
+        short_date_since = date_until - relativedelta(hours=1)
+        long_date_since = date_until - relativedelta(days=30)
+
+        self.assertEqual(
+            self.provider._get_scheduled_date_since(short_date_since, date_until),
+            date_until - relativedelta(days=14),
+        )
+        self.assertEqual(
+            self.provider._get_scheduled_date_since(long_date_since, date_until),
+            long_date_since,
+        )
+
+    @patch("plaid.api.plaid_api.PlaidApi.transactions_get")
+    def test_scheduled_pull_looks_back_across_month_boundary(self, transactions_get):
+        transactions_get.return_value = {
+            "transactions": EMPTY_TRANSACTIONS,
+            "total_transactions": 0,
+        }
+        date_until = datetime.datetime(2024, 8, 10, 12)
+
+        self.provider.with_context(scheduled=True)._pull(
+            date_until - relativedelta(hours=1), date_until
+        )
+
+        self.assertEqual(transactions_get.call_count, 2)
 
     def test_get_services(self):
         services = self.provider._get_available_services()

@@ -200,7 +200,14 @@ class OnlineBankStatementProvider(models.Model):
         debug = self.env.context.get("account_statement_online_import_debug")
         debug_data = []
         for provider in self:
-            statement_date_since = provider._get_statement_date_since(date_since)
+            provider_date_since = date_since
+            if is_scheduled:
+                provider_date_since = provider._get_scheduled_date_since(
+                    date_since, date_until
+                )
+            statement_date_since = provider._get_statement_date_since(
+                provider_date_since
+            )
             while statement_date_since < date_until:
                 # Note that statement_date_until is exclusive, while date_until is
                 # inclusive. So if we have daily statements date_until might
@@ -229,6 +236,11 @@ class OnlineBankStatementProvider(models.Model):
             if is_scheduled:
                 provider._schedule_next_run()
         return debug_data
+
+    def _get_scheduled_date_since(self, date_since, date_until):
+        """Adjust the start of the range used by a scheduled pull."""
+        self.ensure_one()
+        return date_since
 
     def _log_provider_exception(
         self, exception, statement_date_since, statement_date_until
