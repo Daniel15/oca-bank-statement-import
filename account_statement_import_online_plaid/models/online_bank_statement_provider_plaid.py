@@ -1,7 +1,5 @@
 # Copyright 2024 Binhex - Adasat Torres de León.
 # License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl).
-from dateutil.relativedelta import relativedelta
-
 from odoo import _, api, fields, models
 from odoo.exceptions import UserError
 
@@ -42,12 +40,6 @@ class OnlineBankStatementProvider(models.Model):
         if self.service != "plaid":
             return super()._obtain_statement_data(date_since, date_until)
         return self._plaid_retrieve_data(date_since, date_until), {}
-
-    def _get_scheduled_date_since(self, date_since, date_until):
-        date_since = super()._get_scheduled_date_since(date_since, date_until)
-        if self.service == "plaid":
-            return min(date_since, date_until - relativedelta(days=14))
-        return date_since
 
     @api.model
     def _get_available_services(self):
