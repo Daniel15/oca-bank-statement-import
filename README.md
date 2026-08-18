@@ -9,7 +9,10 @@
 
 # bank-statement-import
 
-bank-statement-import
+This fork includes the following fixes:
+- [#955](https://github.com/OCA/bank-statement-import/pull/955): Plaid: Exclude pending transactions.
+- [#989](https://github.com/OCA/bank-statement-import/pull/989): Plaid: Look back 10 days for scheduled syncs, to ensure transactions are properly synced when they change from pending to settled.
+- [#988](https://github.com/OCA/bank-statement-import/pull/988): Clicking "Transactions" button for credit card with credit statements disabled now goes directly to the reconciliation view, similar to how it works for bank accounts.
 
 <!-- /!\ do not modify below this line -->
 
